@@ -42,10 +42,15 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 
 	// check / retrieve parameters
 	if ( IJ.getProperty("de.bio_photonics.gratingsearch.phaseNumber")==null ||
-	     IJ.getProperty("de.bio_photonics.gratingsearch.lastGratings")==null ||
-	     IJ.getProperty("de.bio_photonics.gratingsearch.prefix")==null ||
-	     IJ.getProperty("de.bio_photonics.gratingsearch.width")==null ||
-	     IJ.getProperty("de.bio_photonics.gratingsearch.height")==null 
+        IJ.getProperty("de.bio_photonics.gratingsearch.angNumber")==null ||
+        IJ.getProperty("de.bio_photonics.gratingsearch.resImp")==null ||
+        IJ.getProperty("de.bio_photonics.gratingsearch.wl")==null ||
+        IJ.getProperty("de.bio_photonics.gratingsearch.na")==null ||
+        IJ.getProperty("de.bio_photonics.gratingsearch.lastGratings")==null ||
+	    IJ.getProperty("de.bio_photonics.gratingsearch.width")==null ||
+	    IJ.getProperty("de.bio_photonics.gratingsearch.height")==null ||
+	    IJ.getProperty("de.bio_photonics.gratingsearch.prefix")==null ||
+	    IJ.getProperty("de.bio_photonics.gratingsearch.resImp")==null 
 	    ) {
 	    IJ.log("No pattern information stored, search for pattern first!");
 	    return;
@@ -69,7 +74,7 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 
 	// show dialog
 	GenericDialog gd = new GenericDialog("Pattern generation");
-	gd.addNumericField(String.format("Set nr [0 - %d]",gratList.size()-1),1,0);
+	gd.addNumericField(String.format("Set nr [0 - %d]",gratList.size()-1),0,0);
 // 	gd.addNumericField("SLM width",1280,0);
 // 	gd.addNumericField("SIM height",1024,0);
 // 	gd.addStringField("file prefix","automatic", 30);
@@ -82,41 +87,67 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 // 	int width   = (int)gd.getNextNumber();
 // 	int height  = (int)gd.getNextNumber();
 	String prefix = (String)IJ.getProperty("de.bio_photonics.gratingsearch.prefix");
+
 	int width = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.width");
 	int height = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.height");
 //     OpenDialog directory = new ij.io.OpenDialog("Choose a directory"); 
 // 	String path = directory.getDirectory();
 	final String path;
 	final JFileChooser fc = new JFileChooser();
-    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-    fc.setAcceptAllFileFilterUsed(false);
-    fc.setDialogTitle("choose directory");
-    int returnVal = fc.showSaveDialog(null);
-    if(returnVal == JFileChooser.APPROVE_OPTION) {
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fc.setAcceptAllFileFilterUsed(false);
+        fc.setDialogTitle("choose directory");
+        int returnVal = fc.showSaveDialog(null);
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
 		path = fc.getSelectedFile().getAbsolutePath();
 	}
-    else path="";
+        else path="";
 	
 
-	// generate pattern
-	DisplayWrapper img = new DisplayWrapper(width, height, "Pattern");
+        // generate pattern
+        DisplayWrapper img = new DisplayWrapper(width, height, "Pattern");
 
-	int ang=0;
-	for ( Grating [] gr : gratList.get(nr) ) {
-	    for (int pha =0; pha<nrPhases; pha++) {
-			double phase = pha*Math.PI*2/nrPhases;
-			ImageVector pttr = ImageVector.create(width,height);
-			for ( Grating gri : gr ) {
-				gri.writeToVector( pttr , phase );
-				img.addImage( pttr, String.format("%s_wl%.0f_ang%d_pha:%d", prefix, gri.wavelength, ang, pha*360/nrPhases));
-				if(returnVal == JFileChooser.APPROVE_OPTION) {
-					ImagePlus tmpIP = new ImagePlus("test", pttr.img());
-					IJ.save(tmpIP, String.format("%s/%s_wl%.0f_ang%d_pha%d.bmp", path, prefix, gri.wavelength, ang, pha*360/nrPhases));
-				}
-			}
-	    }
-	    ang++;
-	}
-	img.display();
+//         int test1 = 0;
+//         int test2 = 0;
+//         for ( Grating [] gr : gratList.get(0)) {
+//         test1++;
+//             for ( Grating gri : gr ) {
+//                 test2++;
+//                 System.out.println("test1:" + test1 + " test2:" + test2);
+//             }
+//         }
+        
+        Grating [][] gr = gratList.get(nr);
+        
+        int nrAngles            = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.angNumber") ;
+        double [] resImp        =  (double[])IJ.getProperty("de.bio_photonics.gratingsearch.resImp");
+        double [] wavelength    = (double[])IJ.getProperty("de.bio_photonics.gratingsearch.wl");
+        double [] NA            = (double[])IJ.getProperty("de.bio_photonics.gratingsearch.na");
+
+        for(int r = 0; r<resImp.length; r++) {
+            for(int wl=0; wl<wavelength.length; wl++) {
+                for (int ang =0; ang<nrAngles; ang++) {
+                    for (int pha =0; pha<nrPhases; pha++) {
+                        double phase = pha*Math.PI*2/nrPhases;
+                        ImageVector pttr = ImageVector.create(width,height);
+                        System.out.println("gr["+(wl+r*wavelength.length)+"]["+ang+"]");
+                        Grating gri=gr[wl+r*wavelength.length][ang];
+                        gri.writeToVector( pttr , phase );
+                        String title = String.format("%s", prefix);
+                        title += String.format("_NA:%1.2f", NA[r]);
+                        title += String.format("_res:%1.2f", resImp[r]);
+                        title += String.format("_wl:%.0f", wavelength[wl]);
+                        title += String.format("_ang:%d", ang);
+                        title += String.format("_pha:%d", pha);
+                        img.addImage( pttr, title);
+                        if(returnVal == JFileChooser.APPROVE_OPTION) {
+                            ImagePlus tmpIP = new ImagePlus("test", pttr.img());
+                            IJ.save(tmpIP, String.format("%s/%s_NA%1.2f_res%1.2f_wl%.0f_ang%d_pha%d.bmp", path, prefix, NA[r], resImp[r], wavelength[wl], ang, pha));
+                        }
+                    }
+                }
+            }
+        }
+//         img.display();
     }
 }

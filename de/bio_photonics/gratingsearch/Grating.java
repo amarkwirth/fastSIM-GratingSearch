@@ -93,10 +93,13 @@ class Grating {
     }
 
     /** returns the euclidan distance between two gratings, scaled by their wavelength */
-    public static double scaledDistance( Grating a, Grating b ) {
+    public static double scaledDistance( Grating a, Grating b) {
+        return scaledDistance(a, b, 1.0);
+    }
+    public static double scaledDistance( Grating a, Grating b, double scalefactor) {
 	double avrWavelength = (a.wavelength + b.wavelength)/2;
-	double dx = a.posX/a.wavelength - b.posX/b.wavelength ;
-	double dy = a.posY/a.wavelength - b.posY/b.wavelength ;
+	double dx = scalefactor*a.posX/a.wavelength - b.posX/b.wavelength ;
+	double dy = scalefactor*a.posY/a.wavelength - b.posY/b.wavelength ;
 	double dist = Math.hypot( dy, dx );
 	return dist*avrWavelength;
     }
@@ -121,7 +124,7 @@ class Grating {
 
     /** Write the (binary, -1, 1) pattern to a vector */
     public void writeToVector(final Vec2d.Real vec, final double phase) {
-	final double kx = (2*Math.PI / gratPer) * Math.sin(gratDir );
+    final double kx = (2*Math.PI / gratPer) * Math.sin(gratDir );
 	final double ky = (2*Math.PI / gratPer) * Math.cos(gratDir );
 
 	new SimpleMT.PFor(0, vec.vectorHeight()) {
