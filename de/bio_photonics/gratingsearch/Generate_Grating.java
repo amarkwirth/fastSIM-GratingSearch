@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.ImagePlus;
+import java.io.File;
 import javax.swing.JFileChooser;
 
 import org.fairsim.linalg.Vec2d;
@@ -30,6 +31,41 @@ import org.fairsim.fiji.DisplayWrapper;
 import org.fairsim.fiji.ImageVector;
 
 public class Generate_Grating implements ij.plugin.PlugIn {
+
+    String mktitle(String prefix, double[] NA, double [] resImp, double [] wavelength, int r, int wl, int ang, int pha) {
+        String title = String.format("%s", prefix);
+        if(NA.length==2){
+            title += String.format("_NA%1.2fx%1.2f", NA[0],NA[1]);
+            title += String.format("_re%1.2fx%1.2f", resImp[0],resImp[1]);
+        }
+        title += String.format("_NA%1.2f", NA[r]);
+        title += String.format("_res%1.2f", resImp[r]);
+        title += String.format("_wl%.0f", wavelength[wl]);
+        title += String.format("_ang%d", ang);
+        title += String.format("_pha%d", pha);
+        return title;
+    }
+    
+
+    String mkfolder(String prefix, double[] NA, double [] resImp, double [] wavelength) {
+        String folder = String.format("%s", prefix);
+        folder += "_na";
+        for (int na=0; na<NA.length; na++) {
+            if(na>0) folder+="x";
+            folder += String.format("%1.2f", NA[na]);
+        }
+        folder += "_re";
+        for (int re=0; re<resImp.length; re++) {
+            if(re>0) folder+="x";
+            folder += String.format("%1.2f", resImp[re]);
+        }
+        folder += "_wl";
+        for (int wl=0; wl<wavelength.length; wl++) {
+            if(wl>0) folder+="x";
+            folder+= String.format("%.0f", wavelength[wl]);
+        }
+        return folder;
+    }
 
     public void run(String arg) {
 
@@ -130,24 +166,26 @@ public class Generate_Grating implements ij.plugin.PlugIn {
                     for (int pha =0; pha<nrPhases; pha++) {
                         double phase = pha*Math.PI*2/nrPhases;
                         ImageVector pttr = ImageVector.create(width,height);
-                        System.out.println("gr["+(wl+r*wavelength.length)+"]["+ang+"]");
-                        Grating gri=gr[wl+r*wavelength.length][ang];
+                        Grating gri=gr[ang+r*nrAngles][wl];
                         gri.writeToVector( pttr , phase );
-                        String title = String.format("%s", prefix);
-                        title += String.format("_NA:%1.2f", NA[r]);
-                        title += String.format("_res:%1.2f", resImp[r]);
-                        title += String.format("_wl:%.0f", wavelength[wl]);
-                        title += String.format("_ang:%d", ang);
-                        title += String.format("_pha:%d", pha);
+                        
+                        String title = mktitle(prefix, NA, resImp, wavelength, r, wl, ang, pha);
+                        String folder = mkfolder(prefix, NA, resImp, wavelength);
+                        
+                        System.out.print("gr["+(wl+r*wavelength.length)+"]["+ang+"] -> ");
+                        System.out.println(title);
                         img.addImage( pttr, title);
                         if(returnVal == JFileChooser.APPROVE_OPTION) {
                             ImagePlus tmpIP = new ImagePlus("test", pttr.img());
-                            IJ.save(tmpIP, String.format("%s/%s_NA%1.2f_res%1.2f_wl%.0f_ang%d_pha%d.bmp", path, prefix, NA[r], resImp[r], wavelength[wl], ang, pha));
+                            String directory= path+File.separator+folder+File.separator;
+                            new File(directory).mkdirs();
+                            String absoluteFilename = directory+title+".bmp";
+                            IJ.save(tmpIP, absoluteFilename);
                         }
                     }
                 }
             }
         }
-//         img.display();
+        img.display();
     }
 }

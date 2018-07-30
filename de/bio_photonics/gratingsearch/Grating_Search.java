@@ -702,15 +702,15 @@ public class Grating_Search implements ij.plugin.PlugIn {
                         Tool.trace("hasCandidatesForAll ="+hasCandidatesForAll + " hasCandidatesForAllTirf="+hasCandidatesForAllTirf);
                         Grating[][] tmpResultPlain = outputGratingSets( otherWavelength, currentGrating, wavelength, nr_dir, gaussProfile, max_unwanted, mask_size, imgSpatial, imgFourier, resultList, "main");
                         Grating[][] tmpResultTirf = outputGratingSets( otherWavelengthTirf, currentGratingTirf, wavelength, nr_dir, gaussProfile, max_unwanted, mask_size, imgSpatial, imgFourier, resultList, "extra");
-                        Grating[][] tmpResult = new Grating[wavelength.length*2][Math.min(tmpResultPlain[0].length, tmpResultTirf[0].length)];
+                        Grating[][] tmpResult = new Grating[nr_dir*2][Math.min(tmpResultPlain[0].length, tmpResultTirf[0].length)];
 //                        Tool.trace("tmpResult "+tmpResult.length+ " "+tmpResult[0].length);
 //                        Tool.trace("tmpResult "+tmpResultTirf.length+" "+tmpResultTirf[0].length);
-                        for(int x=0; x<wavelength.length; x++) {
+                        for(int x=0; x<nr_dir; x++) {
                             for(int y=0; y<tmpResult[0].length; y++) {
                                 tmpResult[x][y] = tmpResultPlain[x][y];
                             }
                             for(int y=0; y<tmpResult[0].length; y++) {
-                                tmpResult[x+wavelength.length][y] = tmpResultTirf[x][y];
+                                tmpResult[x+nr_dir][y] = tmpResultTirf[x][y];
                             }
                         }
 //                        Tool.trace("tmpResult "+tmpResult.length+ " "+tmpResult[0].length);
@@ -804,12 +804,12 @@ public class Grating_Search implements ij.plugin.PlugIn {
         gd.addNumericField("SLM scale factor     ", (1250 / 6.), 2);
         gd.addNumericField("objective lens NA or sample    n", 1.36, 2);
         gd.addNumericField("resolution enhancement average  ", 1.80, 2);
-        gd.addNumericField("resolution enhancement range +- ", 0.01, 2);
+        gd.addNumericField("resolution enhancement range +- ", 0.005, 3);
 
         gd.addCheckbox(    "use additional resolution enhancement", true);
         gd.addNumericField("        objective lens NA or sample n", 1.36, 2);
-        gd.addNumericField("       resolution enhancement average", 2.00, 3);
-        gd.addNumericField("      resolution enhancement range +-", 0.01, 3);
+        gd.addNumericField("       resolution enhancement average", 2.00, 2);
+        gd.addNumericField("      resolution enhancement range +-", 0.005, 3);
 
         gd.addMessage("Wavelength to analyse");
         gd.addNumericField("main wavelength", 488, 0, 6, "nm");
@@ -921,7 +921,7 @@ public class Grating_Search implements ij.plugin.PlugIn {
         final int maskSize = (int) gd.getNextNumber();
         final boolean outputFailed = gd.getNextBoolean();
         final int maxCandidates = (int) gd.getNextNumber();
-        final String prefix = String.format("%s_%dx%d", prefixSlm, nrDirs, nrPhases);
+        final String prefix = String.format("%s_%da%dp", prefixSlm, nrDirs, nrPhases);
 
         // 1 - calculate the ranges for all from resolution enhancement
         //
