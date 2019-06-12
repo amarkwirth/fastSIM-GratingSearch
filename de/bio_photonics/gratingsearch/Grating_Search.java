@@ -884,7 +884,10 @@ public class Grating_Search implements ij.plugin.PlugIn {
         Tirf = gd.getNextBoolean();
         objNA[1] = gd.getNextNumber();
         resImpAvr[1] = gd.getNextNumber();
+        if(!Tirf) resImpAvr[1]  = 0;
         resImpRange[1] = gd.getNextNumber();
+        
+
 
         // TODO: there must be a nicer way to code this
         {
@@ -978,7 +981,7 @@ public class Grating_Search implements ij.plugin.PlugIn {
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.width", slmPxlX);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.height", slmPxlY);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.prefix", prefix);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
+//             ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
         }
 
         // find the lowest modulation

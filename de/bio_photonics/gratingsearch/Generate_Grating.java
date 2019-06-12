@@ -34,15 +34,16 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 
     String mktitle(String prefix, double[] NA, double [] resImp, double [] wavelength, int r, int wl, int ang, int pha) {
         String title = String.format("%s", prefix);
-        if(NA.length==2){
+        if(resImp.length>1){
             title += String.format("_NA%1.2fx%1.2f", NA[0],NA[1]);
-            title += String.format("_re%1.2fx%1.2f", resImp[0],resImp[1]);
+            title += String.format("_res%1.2fx%1.2f", resImp[0], resImp[1]);
         }
         title += String.format("_NA%1.2f", NA[r]);
         title += String.format("_res%1.2f", resImp[r]);
         title += String.format("_wl%.0f", wavelength[wl]);
         title += String.format("_ang%d", ang);
         title += String.format("_pha%d", pha);
+        IJ.log("Title: " + title);
         return title;
     }
     
@@ -50,7 +51,7 @@ public class Generate_Grating implements ij.plugin.PlugIn {
     String mkfolder(String prefix, double[] NA, double [] resImp, double [] wavelength) {
         String folder = String.format("%s", prefix);
         folder += "_na";
-        for (int na=0; na<NA.length; na++) {
+        for (int na=0; na<resImp.length; na++) {
             if(na>0) folder+="x";
             folder += String.format("%1.2f", NA[na]);
         }
@@ -64,12 +65,14 @@ public class Generate_Grating implements ij.plugin.PlugIn {
             if(wl>0) folder+="x";
             folder+= String.format("%.0f", wavelength[wl]);
         }
+        IJ.log("Folder: " + folder);
         return folder;
     }
 
     public void run(String arg) {
+        IJ.log("Generate_Grating.java run()");
 
-	if (arg=="clear") {
+	if (arg.equals("clear")) {
 	    IJ.log("clearing stored gratings");
 	    IJ.setProperty("de.bio_photonics.gratingsearch.phaseNumber",null);
 	    IJ.setProperty("de.bio_photonics.gratingsearch.lastGratings",null);
@@ -154,26 +157,32 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 //         }
         
         Grating [][] gr = gratList.get(nr);
-        
+        IJ.log("creating grating "+ nr);
         int nrAngles            = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.angNumber") ;
-        double [] resImp        =  (double[])IJ.getProperty("de.bio_photonics.gratingsearch.resImp");
+        double [] resImpAvr     =  (double[])IJ.getProperty("de.bio_photonics.gratingsearch.resImp");
+        double [] resImp = new double[((resImpAvr[1] != 0) ? 2 : 1)];
+        for(int r = 0; r<resImp.length ;r++) {
+            resImp[r] = resImpAvr[r];
+        }
+        IJ.log("resImp.length = " + resImp.length);
         double [] wavelength    = (double[])IJ.getProperty("de.bio_photonics.gratingsearch.wl");
         double [] NA            = (double[])IJ.getProperty("de.bio_photonics.gratingsearch.na");
 
-        for(int r = 0; r<resImp.length; r++) {
+        for(int r = 0; r<resImp.length ;r++) {
             for(int wl=0; wl<wavelength.length; wl++) {
                 for (int ang =0; ang<nrAngles; ang++) {
                     for (int pha =0; pha<nrPhases; pha++) {
                         double phase = pha*Math.PI*2/nrPhases;
                         ImageVector pttr = ImageVector.create(width,height);
+                        IJ.log("Grating gri=gr[" + ang+r*nrAngles + "][" + wl + "]   " + ang + " " + r + " " + nrAngles + " " + wl);
                         Grating gri=gr[ang+r*nrAngles][wl];
                         gri.writeToVector( pttr , phase );
                         
                         String title = mktitle(prefix, NA, resImp, wavelength, r, wl, ang, pha);
                         String folder = mkfolder(prefix, NA, resImp, wavelength);
                         
-                        System.out.print("gr["+(wl+r*wavelength.length)+"]["+ang+"] -> ");
-                        System.out.println(title);
+                        IJ.log("gr["+(wl+r*wavelength.length)+"]["+ang+"] -> ");
+                        IJ.log(title);
                         img.addImage( pttr, title);
                         if(returnVal == JFileChooser.APPROVE_OPTION) {
                             ImagePlus tmpIP = new ImagePlus("test", pttr.img());
