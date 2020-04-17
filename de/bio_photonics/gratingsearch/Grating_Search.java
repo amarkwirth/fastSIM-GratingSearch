@@ -986,14 +986,19 @@ public class Grating_Search implements ij.plugin.PlugIn {
         if (res.size() > 0) {
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.phaseNumber", nrPhases);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.angNumber", nrDirs );
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
+            if(Tirf) {
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
+            } else {
+                double tmp[] = {resImpAvr[0]};
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", tmp);
+            }
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.wl", wavelength);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.na", refInd);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.lastGratings", res);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.width", slmPxlX);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.height", slmPxlY);
             ij.IJ.setProperty("de.bio_photonics.gratingsearch.prefix", prefix);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
+//             ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
         }
 
         // find the lowest modulation
