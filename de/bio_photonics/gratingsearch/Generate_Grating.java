@@ -32,8 +32,9 @@ import org.fairsim.fiji.ImageVector;
 
 public class Generate_Grating implements ij.plugin.PlugIn {
 
-    String mktitle(String prefix, double NA, double [] resImp, double [] wavelength, int r, int wl, int ang, int pha) {
+    String mktitle(String prefix, int saveNr, double NA, double [] resImp, double [] wavelength, int r, int wl, int ang, int pha) {
         String title = String.format("%s", prefix);
+        title += "_"+String.format("%02d",   saveNr)+"_";
         title += String.format("_NA%1.2f", NA);
         title += "_res";
         for (int re=0; re<resImp.length; re++) {
@@ -48,8 +49,9 @@ public class Generate_Grating implements ij.plugin.PlugIn {
     }
     
 
-    String mkfolder(String prefix, double NA, double [] resImp, double [] wavelength) {
+    String mkfolder(String prefix, int saveNr, double NA, double [] resImp, double [] wavelength) {
         String folder = String.format("%s", prefix);
+        folder += "_"+String.format("%02d", saveNr)+"_";
         folder += "_na";
         folder += String.format("%1.2f", NA);
         folder += "_res";
@@ -109,15 +111,15 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 	// show dialog
 	GenericDialog gd = new GenericDialog("Pattern generation");
 	gd.addNumericField(String.format("Set nr [0 - %d]",gratList.size()-1),0,0);
-// 	gd.addNumericField("SLM width",1280,0);
-// 	gd.addNumericField("SIM height",1024,0);
-// 	gd.addStringField("file prefix","automatic", 30);
+	gd.addCheckbox("Save all", false);
+
 	gd.showDialog();
 	if (gd.wasCanceled())
 	    return;
     
 	// get and check parameters
 	int nr = (int)gd.getNextNumber();
+	Boolean saveAll = gd.getNextBoolean();
 // 	int width   = (int)gd.getNextNumber();
 // 	int height  = (int)gd.getNextNumber();
 	String prefix = (String)IJ.getProperty("de.bio_photonics.gratingsearch.prefix");
@@ -150,40 +152,46 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 //                 System.out.println("test1:" + test1 + " test2:" + test2);
 //             }
 //         }
-        
-        Grating [][] gr = gratList.get(nr);
-        
-        int nrAngles            = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.angNumber") ;
-        double [] resImp        =  (double[])IJ.getProperty("de.bio_photonics.gratingsearch.resImp");
-        double [] wavelength    = (double[])IJ.getProperty("de.bio_photonics.gratingsearch.wl");
-        double NA            = (Double)IJ.getProperty("de.bio_photonics.gratingsearch.na");
+    int saveStart = 0; int saveStop = gratList.size()-1;
+    if(saveAll = false){
+        saveStart = nr;
+        saveStop = nr;
+    }
+        for(int saveNr = saveStart; saveNr <= saveStop; saveNr++) {
+            Grating [][] gr = gratList.get(saveNr);
+            
+            int nrAngles            = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.angNumber") ;
+            double [] resImp        =  (double[])IJ.getProperty("de.bio_photonics.gratingsearch.resImp");
+            double [] wavelength    = (double[])IJ.getProperty("de.bio_photonics.gratingsearch.wl");
+            double NA            = (Double)IJ.getProperty("de.bio_photonics.gratingsearch.na");
 
-        for(int r = 0; r<resImp.length; r++) {
-            for(int wl=0; wl<wavelength.length; wl++) {
-                for (int ang =0; ang<nrAngles; ang++) {
-                    for (int pha =0; pha<nrPhases; pha++) {
-                        double phase = pha*Math.PI*2/nrPhases;
-                        ImageVector pttr = ImageVector.create(width,height);
-                        Grating gri=gr[ang+r*nrAngles][wl];
-                        gri.writeToVector( pttr , phase );
-                        
-                        String title = mktitle(prefix, NA, resImp, wavelength, r, wl, ang, pha);
-                        String folder = mkfolder(prefix, NA, resImp, wavelength);
-                        
-                        System.out.print("gr["+(wl+r*wavelength.length)+"]["+ang+"] -> ");
-                        System.out.println(title);
-                        img.addImage( pttr, title);
-                        if(returnVal == JFileChooser.APPROVE_OPTION) {
-                            ImagePlus tmpIP = new ImagePlus("test", pttr.img());
-                            String directory= path+File.separator+folder+File.separator;
-                            new File(directory).mkdirs();
-                            String absoluteFilename = directory+title+".bmp";
-                            IJ.save(tmpIP, absoluteFilename);
+            for(int r = 0; r<resImp.length; r++) {
+                for(int wl=0; wl<wavelength.length; wl++) {
+                    for (int ang =0; ang<nrAngles; ang++) {
+                        for (int pha =0; pha<nrPhases; pha++) {
+                            double phase = pha*Math.PI*2/nrPhases;
+                            ImageVector pttr = ImageVector.create(width,height);
+                            Grating gri=gr[ang+r*nrAngles][wl];
+                            gri.writeToVector( pttr , phase );
+                            
+                            String title = mktitle(prefix, saveNr, NA, resImp, wavelength, r, wl, ang, pha);
+                            String folder = mkfolder(prefix, saveNr, NA, resImp, wavelength);
+                            
+                            System.out.print("gr["+(wl+r*wavelength.length)+"]["+ang+"] -> ");
+                            System.out.println(title);
+                            img.addImage( pttr, title);
+                            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                                ImagePlus tmpIP = new ImagePlus("test", pttr.img());
+                                String directory= path+File.separator+folder+File.separator;
+                                new File(directory).mkdirs();
+                                String absoluteFilename = directory+title+".bmp";
+                                IJ.save(tmpIP, absoluteFilename);
+                            }
                         }
                     }
                 }
             }
+            img.display();
         }
-        img.display();
     }
 }
