@@ -41,7 +41,6 @@ public class Generate_Grating implements ij.plugin.PlugIn {
             if(re>0) title+="x";
             title += String.format("%1.2f", resImp[re]);
         }
-//         title += String.format("_res%1.2f", resImp[r]);
         title += String.format("_wl%.0f", wavelength[wl]);
         title += String.format("_ang%d", ang);
         title += String.format("_pha%d", pha);
@@ -69,91 +68,78 @@ public class Generate_Grating implements ij.plugin.PlugIn {
 
     public void run(String arg) {
 
-	if (arg=="clear") {
-	    IJ.log("clearing stored gratings");
-	    IJ.setProperty("de.bio_photonics.gratingsearch.phaseNumber",null);
-	    IJ.setProperty("de.bio_photonics.gratingsearch.lastGratings",null);
-	    return;
-	}
+    if (arg.equals("clear")) {
+        IJ.log("clearing stored gratings");
+        IJ.setProperty("de.bio_photonics.gratingsearch.phaseNumber",null);
+        IJ.setProperty("de.bio_photonics.gratingsearch.lastGratings",null);
+        return;
+    }
 
-	// check / retrieve parameters
-	if ( IJ.getProperty("de.bio_photonics.gratingsearch.phaseNumber")==null ||
+    // check / retrieve parameters
+    if ( IJ.getProperty("de.bio_photonics.gratingsearch.phaseNumber")==null ||
         IJ.getProperty("de.bio_photonics.gratingsearch.angNumber")==null ||
         IJ.getProperty("de.bio_photonics.gratingsearch.resImp")==null ||
         IJ.getProperty("de.bio_photonics.gratingsearch.wl")==null ||
         IJ.getProperty("de.bio_photonics.gratingsearch.na")==null ||
         IJ.getProperty("de.bio_photonics.gratingsearch.lastGratings")==null ||
-	    IJ.getProperty("de.bio_photonics.gratingsearch.width")==null ||
-	    IJ.getProperty("de.bio_photonics.gratingsearch.height")==null ||
-	    IJ.getProperty("de.bio_photonics.gratingsearch.prefix")==null ||
-	    IJ.getProperty("de.bio_photonics.gratingsearch.resImp")==null 
-	    ) {
-	    IJ.log("No pattern information stored, search for pattern first!");
-	    return;
-	}
+        IJ.getProperty("de.bio_photonics.gratingsearch.width")==null ||
+        IJ.getProperty("de.bio_photonics.gratingsearch.height")==null ||
+        IJ.getProperty("de.bio_photonics.gratingsearch.prefix")==null ||
+        IJ.getProperty("de.bio_photonics.gratingsearch.resImp")==null 
+        ) {
+        IJ.log("No pattern information stored, search for pattern first!");
+        return;
+    }
 
-	// TODO: Check for cast errors?
-	int nrPhases = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.phaseNumber");
+    // TODO: Check for cast errors?
+    int nrPhases = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.phaseNumber");
 
-	Object a= IJ.getProperty("de.bio_photonics.gratingsearch.lastGratings");
-	List tmp = ( a instanceof List )?((List)a):(null);
-	List<Grating [][]> gratList = new ArrayList<Grating [][]>();
+    Object a= IJ.getProperty("de.bio_photonics.gratingsearch.lastGratings");
+    List tmp = ( a instanceof List )?((List)a):(null);
+    List<Grating [][]> gratList = new ArrayList<Grating [][]>();
 
-	for ( Object b : tmp ) 
-	    if ( b instanceof Grating[][] ) gratList.add((Grating [][])b);    
-	
-
-	if (gratList !=null && gratList.size()==0) {
-	    IJ.log("No pattern in list, run search again");
-	    return;
-	}
-
-	// show dialog
-	GenericDialog gd = new GenericDialog("Pattern generation");
-	gd.addNumericField(String.format("Set nr [0 - %d]",gratList.size()-1),0,0);
-	gd.addCheckbox("Save all", false);
-
-	gd.showDialog();
-	if (gd.wasCanceled())
-	    return;
+    for ( Object b : tmp ) 
+        if ( b instanceof Grating[][] ) gratList.add((Grating [][])b);    
     
-	// get and check parameters
-	int nr = (int)gd.getNextNumber();
-	Boolean saveAll = gd.getNextBoolean();
-// 	int width   = (int)gd.getNextNumber();
-// 	int height  = (int)gd.getNextNumber();
-	String prefix = (String)IJ.getProperty("de.bio_photonics.gratingsearch.prefix");
 
-	int width = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.width");
-	int height = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.height");
-//     OpenDialog directory = new ij.io.OpenDialog("Choose a directory"); 
-// 	String path = directory.getDirectory();
-	final String path;
-	final JFileChooser fc = new JFileChooser();
+    if (gratList !=null && gratList.size()==0) {
+        IJ.log("No pattern in list, run search again");
+        return;
+    }
+
+    // show dialog
+    GenericDialog gd = new GenericDialog("Pattern generation");
+    gd.addNumericField(String.format("Set nr [0 - %d]",gratList.size()-1),0,0);
+    gd.addCheckbox("Save all", false);
+
+    gd.showDialog();
+    if (gd.wasCanceled())
+        return;
+    
+    // get and check parameters
+    int nr = (int)gd.getNextNumber();
+    Boolean saveAll = gd.getNextBoolean();
+    String prefix = (String)IJ.getProperty("de.bio_photonics.gratingsearch.prefix");
+
+    int width = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.width");
+    int height = (Integer)IJ.getProperty("de.bio_photonics.gratingsearch.height");
+    final String path;
+    final JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         fc.setAcceptAllFileFilterUsed(false);
         fc.setDialogTitle("choose directory");
         int returnVal = fc.showSaveDialog(null);
         if(returnVal == JFileChooser.APPROVE_OPTION) {
-		path = fc.getSelectedFile().getAbsolutePath();
-	}
+        path = fc.getSelectedFile().getAbsolutePath();
+    }
         else path="";
-	
+    
 
         // generate pattern
         DisplayWrapper img = new DisplayWrapper(width, height, "Pattern");
 
-//         int test1 = 0;
-//         int test2 = 0;
-//         for ( Grating [] gr : gratList.get(0)) {
-//         test1++;
-//             for ( Grating gri : gr ) {
-//                 test2++;
-//                 System.out.println("test1:" + test1 + " test2:" + test2);
-//             }
-//         }
     int saveStart = 0; int saveStop = gratList.size()-1;
-    if(saveAll = false){
+    if(saveAll.equals(false)){
         saveStart = nr;
         saveStop = nr;
     }
