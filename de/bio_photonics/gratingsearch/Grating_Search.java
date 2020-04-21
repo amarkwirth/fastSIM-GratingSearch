@@ -340,8 +340,6 @@ public class Grating_Search implements ij.plugin.PlugIn {
                 maskRings[i * 4 + 3]
                     = new ImageDisplay.Marker(fsPxl / 2 - mPos[0], fsPxl / 2 - mPos[1], maskSize, maskSize, false);
             }
-            //fourier.addImage(magnitude( sumFreq ), 
-            //name+" "+magResult+((ok)?("ok"):("!!not OK")), maskRings);
             fourier.addImage(sumFreq,
                 name + " " + magResult + ((ok) ? ("ok") : ("!!not OK")), maskRings);
         }
@@ -457,16 +455,7 @@ public class Grating_Search implements ij.plugin.PlugIn {
 
     
     public Grating[][] outputGratingSets(List<List<Grating[]>> otherWavelength, Grating[] currentGrating, double[] wavelength, int nr_dir, Vec2d.Real gaussProfile, double max_unwanted, int mask_size, DisplayWrapper imgSpatial, DisplayWrapper imgFourier, List<Grating[][]> resultList, String nameString) {
-//        Tool.trace("otherWavelength.size() = " + otherWavelength.size());
-        //                 String res = "1";
-        //                 for (int ch = 1; ch < channels.length; ch++) {
-        //                     res += " " + otherWavelength.get(ch - 1).size();
-        //                 }
-        
-        //                 Tool.trace("found a full combination, adding it to final results:" + res);
-        
         Grating[][] fullSet = new Grating[wavelength.length][];
-        
         fullSet[0] = currentGrating;
         for (int ch = 1; ch < wavelength.length; ch++) {
             fullSet[ch] = lowestAvrEuclDist(currentGrating, otherWavelength.get(ch - 1));
@@ -503,8 +492,6 @@ public class Grating_Search implements ij.plugin.PlugIn {
                 Grating main = currentGrating[d];
                 List<Grating> thisDir = new ArrayList<Grating>();
                 for ( Grating cand : all.get(ch) ) {
-                    //                        if(Math.abs(Grating.wrapPi(cand.gratDir) - Grating.wrapPi(main.gratDir)) > max_angle)
-                    //                            continue;
                     if ( Grating.scaledDistance( cand, main ) > max_euclDist)
                         continue;
                     thisDir.add(cand);
@@ -549,7 +536,6 @@ public class Grating_Search implements ij.plugin.PlugIn {
                 return false;
             
             otherWavelength.add(secondaryList);
-//            Tool.trace("otherWavelength.add(secondaryList) -> otherWavelength.size() = " + otherWavelength.size());
         }
         return true;
     }
@@ -583,8 +569,6 @@ public class Grating_Search implements ij.plugin.PlugIn {
         int countModOkAdded = 0;
         int tirf = Tirf ? 1 : 0;
         
-
-//      resultList[#result][#angles][#wl] #angles doubled for tirf
         List<Grating[][]> resultList = new ArrayList<Grating[][]>();
 
         SimpleMT.useParallel(true);
@@ -619,7 +603,7 @@ public class Grating_Search implements ij.plugin.PlugIn {
         // for the first, main wavelength, get a list of matching gratings...
         Tool.trace("-- Compute direction combinations (main wavelength) --");
         List<Grating[]> dirs = selectDirs(all.get(0), allTirf.get(0), Tirf, nr_dir, max_angle);
-        List<Grating[]>  dirsTirf = new ArrayList<Grating[]>();
+        List<Grating[]> dirsTirf = new ArrayList<Grating[]>();
         Tool.trace("   grating pairs for main wavelength: " + dirs.size());
         if(Tirf) {
             dirsTirf = selectDirs(allTirf.get(0),all.get(0), Tirf, nr_dir, max_angle);
@@ -689,26 +673,19 @@ public class Grating_Search implements ij.plugin.PlugIn {
                     }
                         countOkTirf++;
                         modOkTirf.add(dirsTirf.get(i));
-//                         if (countOkTirf >= max_candidates) {
-//                             break;
-//                         }
                 }
                 int k=0;
                 int countResAdded=0;
                 for (Grating [] currentGratingTirf : modOkTirf) {
                     k++;
-//                     Tool.trace(j + "/" + modOk.size() + " " + k + "/" + modOkTirf.size());
                     iterationString = ("main WL "+j + "/" + modOk.size() + " addWL for mainTIRWL " + k + "/" + modOkTirf.size());
                     hasCandidatesForAllTirf = matchOtherWavelengths(otherWavelengthTirf, wavelength, nr_dir, currentGratingTirf, max_euclDist, max_candidates, countOkTirf, gaussProfile, max_unwanted, mask_size, resultList, allTirf, iterationString);
                    
                     // output some success
                     if (hasCandidatesForAll && hasCandidatesForAllTirf) {
-//                         Tool.trace(j + "/" + modOk.size() + " has candidates for all angles, TIRF");
                         Grating[][] tmpResultPlain = outputGratingSets( otherWavelength, currentGrating, wavelength, nr_dir, gaussProfile, max_unwanted, mask_size, imgSpatial, imgFourier, resultList, "main");
                         Grating[][] tmpResultTirf = outputGratingSets( otherWavelengthTirf, currentGratingTirf, wavelength, nr_dir, gaussProfile, max_unwanted, mask_size, imgSpatial, imgFourier, resultList, "extra");
                         Grating[][] tmpResult = new Grating[nr_dir*2][Math.min(tmpResultPlain[0].length, tmpResultTirf[0].length)];
-//                        Tool.trace("tmpResult "+tmpResult.length+ " "+tmpResult[0].length);
-//                        Tool.trace("tmpResult "+tmpResultTirf.length+" "+tmpResultTirf[0].length);
                         for(int x=0; x<nr_dir; x++) {
                             for(int y=0; y<tmpResult[0].length; y++) {
                                 tmpResult[x][y] = tmpResultPlain[x][y];
@@ -717,17 +694,11 @@ public class Grating_Search implements ij.plugin.PlugIn {
                                 tmpResult[x+nr_dir][y] = tmpResultTirf[x][y];
                             }
                         }
-//                        Tool.trace("tmpResult "+tmpResult.length+ " "+tmpResult[0].length);
                         resultList.add(tmpResult);
                         countResAdded++;
                         Tool.trace(j + "/" + modOk.size() + " has candidates for all angles, TIR. Adding result " +countResAdded+ ". Total: "+resultList.size()+"/"+max_candidates);
-//                         if(countResAdded >= max_candidates) break;
-//                         if(countModOkAdded >= 1) break;
-                    } else {
-//                         Tool.trace("no luck");
                     }
                 }
-                
             } else {
                 if (hasCandidatesForAll) {
                         resultList.add(outputGratingSets(otherWavelength, currentGrating, wavelength,  nr_dir, gaussProfile, max_unwanted, mask_size, imgSpatial, imgFourier, resultList, ""));
@@ -739,34 +710,8 @@ public class Grating_Search implements ij.plugin.PlugIn {
 
         imgSpatial.display();
         imgFourier.display();
-
         Tool.trace("    Number of full sets of pattern " + resultList.size());
 
-        /*
-	// check if unwanted orders can be blocked by masking
-	Tool.trace("-- Compute wanted vs. unwanted orders --");
-	
-	Vec2d.Real gaussProfile = createGaussIllum( fsPxl/2.2, fsPxl);
-	int countOk=0;
-	for (int i=0; i< dirs.size() ; i++) {
-	    
-	    if (i%10==0) Tool.tell(" FFT "+i+"/"+dirs.size());
-	    
-	    boolean ok = true;
-	    
-	    for (int ch=0; ch<wavelength.length; ch++) {
-		ok &= fourierCheck( dirs.get(i)[ch], gaussProfile, max_unwanted, mask_size, 
-		    output_failed, imgSpatial, imgFourier, "i:"+i); 
-	    }
-	    
-	    if (ok) {
-		countOk++;
-		resultList.add( dirs.get(i) );
-	    }
-	}
-	
-	Tool.trace("    Number of pattern after modulation check: "+ countOk);
-         */
         return resultList;
     }
 
@@ -795,275 +740,296 @@ public class Grating_Search implements ij.plugin.PlugIn {
             }
 
         });
+        
+        String slmType = "SXGA-3DM";
+        String  slmPrefix = "other";
+        double slmPxlSize = 13.62;
+        double pxlSize = 1000* slmPxlSize;
+        double slmScale = 300;
+        int slmPxlX = 1280;
+        int slmPxlY = 1024;
+        double objNA = 1.47;
+        double refInd = 1.36;
+        double resImpAvr[] = {1.80, 1.5+(objNA)/refInd/2.};
+        double[] resImpRange = {0.005, 0.005/2.};
+        boolean Tirf = true;
+        double[] wavelength_gui = {488, 568, 647};
+        boolean[] wavelength_gui_switch = {true, true, true};
+        int nrDirs = 3;
+        double maxAngleDevDeg =  2;
+        double maxAngleDev = maxAngleDevDeg * Math.PI/180.;
+        int nrPhases = 3;
+        double maxEuclDist = 0.05;
+        double maxUnwMod = 0.015;
+        int maskSize = 15;
+        boolean outputFailed = false;
+        int maxCandidates = 200;
 
-        // generate simple GUI
-        GenericDialog gd = new GenericDialog("SLM pattern search");
-        gd.addMessage("System parameters");
-        String[] items = {"SXGA-3DM", "DLP6500FYE", "other"};
-        gd.addRadioButtonGroup("SLM", items, 3, 1, "SXGA-3DM");
-        gd.addStringField("    other", "SLM", 30);
-        gd.addNumericField("    other: pixel size", 13.62, 2, 6, "µm");
-        gd.addNumericField("    other: pixels X  ", 1280, 0);
-        gd.addNumericField("    other: pixels Y  ", 1024, 0);
-        gd.addMessage("              ");
-        gd.addNumericField("                SLM scale factor", (300), 2);
-        gd.addNumericField("               objective lens NA", 1.47, 2);
-        gd.addNumericField("     refractive index n (sample)", 1.36, 2);
-        gd.addNumericField("resolution enhancement average  ", 1.80, 3);
-        gd.addNumericField("resolution enhancement range +- ", 0.005, 3);
 
-        gd.addCheckbox(    "create additional TIR pattern", true);
-//         gd.addNumericField("        objective lens NA or sample n", 1.36, 2);
-//         gd.addNumericField("       resolution enhancement average", 2.00, 4);
-//         gd.addNumericField("      resolution enhancement range +-", 0.002, 4);
-
-        gd.addMessage("Wavelength to analyse");
-        gd.addNumericField("main wavelength", 488, 0, 6, "nm");
-        gd.addCheckbox("use additional wavelength 1", true);
-        gd.addNumericField(" add wavelength 1", 568, 0, 6, "nm");
-        gd.addCheckbox("use additional wavelength 2", true);
-        gd.addNumericField("add wavelength 2", 647, 0, 6, "nm");
-
-        gd.addMessage("Pattern parameters");
-        gd.addNumericField("#pattern_directions", 3, 0);
-        gd.addNumericField("max_deviation_ideal_angle", 2, 1, 6, "deg");
-        gd.addNumericField("#phases", 3, 0);
-        gd.addNumericField("max_eucl_dist(approx. pxl)", .05, 2);
-        gd.addMessage("Modulation");
-        gd.addNumericField("max_unwanted_modulation", 0.015, 3);
-        gd.addNumericField("mask_size", 15, 0, 6, "pxl");
-        gd.addCheckbox("Output_also_failed", false);
-        gd.addMessage("Cancel");
-        gd.addNumericField("max_nr_candidates", 200, 0);
-
-        gd.showDialog();
-        if (gd.wasCanceled()) {
-            return;
-        }
-
-        // ---- get parameters ----
-        final double pxlSize, slmPxlSize, slmScale;
-        final int slmPxlX, slmPxlY;
-        final String slmType = gd.getNextRadioButton(), prefixSlm;
-
-        if (slmType.equals("SXGA-3DM")) {
-            prefixSlm = "SXGA3DM";
-            gd.getNextString();
-            slmPxlSize = 13.62;
-            gd.getNextNumber();
-            slmPxlX = 1280;
-            gd.getNextNumber();
-            slmPxlY = 1024;
-            gd.getNextNumber();
-            slmScale = gd.getNextNumber();
-            pxlSize = 1000. * slmPxlSize / slmScale;
-        } else if (slmType.equals("DLP6500FYE")) {
-            prefixSlm = "DLP6500";
-            gd.getNextString();
-            slmPxlSize = 7.56;
-            gd.getNextNumber();
-            slmPxlX = 1920;
-            gd.getNextNumber();
-            slmPxlY = 1080;
-            gd.getNextNumber();
-            slmScale = gd.getNextNumber();
-            pxlSize = 1000. * slmPxlSize / slmScale;
-        } else {
-            prefixSlm = gd.getNextString();
-            slmPxlSize = gd.getNextNumber();
-            slmPxlX = (int) gd.getNextNumber();
-            slmPxlY = (int) gd.getNextNumber();
-            slmScale = gd.getNextNumber();
-            pxlSize = 1000. * slmPxlSize / slmScale;
-        }
-        double refInd;
-        double objNA;
-        double[] resImpAvr = new double[2];
-        double[] resImpRange = new double[2];
-        boolean Tirf;
-        double[] wavelength_gui = new double[3];
-        boolean[] wavelength_gui_switch = new boolean[3];
-        double[] wavelength;
-
-        objNA = gd.getNextNumber();
-        refInd = gd.getNextNumber();
-        if(objNA < refInd) {
-            refInd=objNA;
-        }
-        resImpAvr[0] = gd.getNextNumber();
-        resImpRange[0] = gd.getNextNumber();
-        Tirf = gd.getNextBoolean();
-        int tirf = Tirf ? 1 : 0;
-        resImpAvr[1] = 1.5+(objNA)/refInd/2.;
-        resImpRange[1] =resImpRange[0]/2;
-
-        // TODO: there must be a nicer way to code this
-        {
-            // copy all wavelength and switches
-            int count_active = 1;
-            for (int i = 0; i < 3; i++) {
-                wavelength_gui[i] = gd.getNextNumber();
-                if (i != 0) {
-                    wavelength_gui_switch[i] = gd.getNextBoolean();
-                    if (wavelength_gui_switch[i] == true) {
-                        count_active++;
-                    }
-                }
+        while(true) {
+            // generate simple GUI, store changed parameters temporarily, restart automatically
+            // this should make it easier to find patterns that are close to whatever resolution improvement one is looking for.
+            GenericDialog gd = new GenericDialog("SLM pattern search");
+            gd.addMessage("System parameters");
+            String[] items = {"SXGA-3DM", "DLP6500FYE", slmPrefix};
+            gd.addRadioButtonGroup("SLM", items, 3, 1, slmType);
+            gd.addStringField("    other", slmPrefix, 30);
+            gd.addNumericField("    other: pixel size", slmPxlSize, 2, 6, "µm");
+            gd.addNumericField("    other: pixels X  ", slmPxlX, 0);
+            gd.addNumericField("    other: pixels Y  ", slmPxlY, 0);
+            gd.addMessage("              ");
+            gd.addNumericField("                SLM scale factor", (slmScale), 2);
+            gd.addNumericField("               objective lens NA", objNA, 2);
+            gd.addNumericField("     refractive index n (sample)", refInd, 2);
+            gd.addNumericField("resolution enhancement average  ", resImpAvr[0], 3);
+            gd.addNumericField("resolution enhancement range +- ", resImpRange[0], 3);
+    
+            gd.addCheckbox(    "create additional TIR pattern", true);
+    
+            gd.addMessage("Wavelength to analyse");
+            gd.addNumericField("main wavelength", wavelength_gui[0], 0, 6, "nm");
+            gd.addCheckbox("use additional wavelength 1", wavelength_gui_switch[1]);
+            gd.addNumericField(" add wavelength 1", wavelength_gui[1], 0, 6, "nm");
+            gd.addCheckbox("use additional wavelength 2", wavelength_gui_switch[2]);
+            gd.addNumericField("add wavelength 2", wavelength_gui[2], 0, 6, "nm");
+    
+            gd.addMessage("Pattern parameters");
+            gd.addNumericField("#pattern_directions", nrDirs, 0);
+            gd.addNumericField("max_deviation_ideal_angle", maxAngleDevDeg, 1, 6, "deg");
+            gd.addNumericField("#phases", nrPhases, 0);
+            gd.addNumericField("max_eucl_dist(approx. pxl)", maxEuclDist, 2);
+            gd.addMessage("Modulation");
+            gd.addNumericField("max_unwanted_modulation", maxUnwMod, 3);
+            gd.addNumericField("mask_size", maskSize, 0, 6, "pxl");
+            gd.addCheckbox("Output_also_failed", outputFailed);
+            gd.addMessage("Done");
+            gd.addNumericField("max_nr_candidates", maxCandidates, 0);
+    
+            gd.showDialog();
+            if (gd.wasCanceled()) {
+                return;
             }
-
-            // create the final array 
-            wavelength = new double[count_active];
-
-            wavelength[0] = wavelength_gui[0];
-            int count_pos = 1;
-            for (int i = 1; i < 3; i++) {
-                if (wavelength_gui_switch[i] == true) {
-                    wavelength[count_pos++] = wavelength_gui[i];
-                }
-            }
-        }
-
-        final int nrDirs = (int) gd.getNextNumber();
-        final double maxAngleDev =  gd.getNextNumber() * Math.PI/180.;
-        final int nrPhases = (int) gd.getNextNumber();
-        final double maxEuclDist = gd.getNextNumber();
-
-        final double maxUnwMod = gd.getNextNumber();
-        final int maskSize = (int) gd.getNextNumber();
-        final boolean outputFailed = gd.getNextBoolean();
-        final int maxCandidates = (int) gd.getNextNumber();
-        final String prefix = String.format("%s_%da%dp", prefixSlm, nrDirs, nrPhases);
-
-        // 1 - calculate the ranges for all from resolution enhancement
-        //
-        // This is pttr/2 = lambda / ( 2 * NA * (resImp-1) * pxlSize)
-        // where
-        //  pttr    : pattern spacing, in pxls
-        //  lambda  : exitation wavelength
-        //  NA	    : objective's NA
-        //  resImp  : factor of resolution improvement, e.g. 1.75x
-        //  pxlSize : projected pixel size 
-        //
-        double resImpMin[] = new double[2];
-        double resImpMax[] = new double[2];
-        resImpMin[0] = resImpAvr[0] - resImpRange[0];
-        resImpMin[1] = resImpAvr[1] - resImpRange[1];
-        resImpMax[0] = resImpAvr[0] + resImpRange[0];
-        resImpMax[1] = resImpAvr[1] + resImpRange[1];
-
-
-        IJ.log(String.format("Searching pattern for res. improvement %7.4f -- %7.4f",
-            resImpMin[0], resImpMax[0]));
-        IJ.log(String.format("Searching pattern for res. improvement %7.4f -- %7.4f",
-            resImpMin[1], resImpMax[1]));
-
-        IJ.log(String.format("Objective %7.4f NA, proj. SLM pixels %5.1f nm", refInd, pxlSize));
-
-        double[][] gratMin = new double[2][3];
-        double[][] gratMax = new double[2][3];
-
-        for (int ch = 0; ch < wavelength.length; ch++) {
-            gratMin[0][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMax[0] - 1) * pxlSize);
-            gratMin[1][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMax[1] - 1) * pxlSize);
-            gratMax[0][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMin[0] - 1) * pxlSize);
-            gratMax[1][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMin[1] - 1) * pxlSize);
-
-            IJ.log(String.format("Search range %5.0f nm: %7.4f --- %7.4f pxl", wavelength[ch],
-                gratMin[0][ch], gratMax[0][ch]));
-                IJ.log(String.format("Search range %5.0f nm: %7.4f --- %7.4f pxl", wavelength[ch],
-                gratMin[1][ch], gratMax[1][ch]));
-
-        }
-
-        // run the actual calculation
-        List<Grating[][]> res = calculate(wavelength, Tirf,
-            resImpAvr, refInd,
-            gratMin, gratMax, nrPhases,
-            nrDirs, maxAngleDev, maskSize,
-            maxUnwMod, maxEuclDist, outputFailed, maxCandidates);
-
-        // store the result, if any
-        if (res.size() > 0) {
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.phaseNumber", nrPhases);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.angNumber", nrDirs );
-            if(Tirf) {
-                ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
+//             IJ.setProperty("de.bio_photonics.gratingsearch.phaseNumber",null);
+//             IJ.setProperty("de.bio_photonics.gratingsearch.lastGratings",null);
+    
+            // ---- get parameters ----
+           
+            slmType = gd.getNextRadioButton();
+    
+            if (slmType.equals("SXGA-3DM")) {
+                slmPrefix = "SXGA3DM";
+                gd.getNextString();
+                slmPxlSize = 13.62;
+                gd.getNextNumber();
+                slmPxlX = 1280;
+                gd.getNextNumber();
+                slmPxlY = 1024;
+                gd.getNextNumber();
+                slmScale = gd.getNextNumber();
+                pxlSize = 1000. * slmPxlSize / slmScale;
+            } else if (slmType.equals("DLP6500FYE")) {
+                slmPrefix = "DLP6500";
+                gd.getNextString();
+                slmPxlSize = 7.56;
+                gd.getNextNumber();
+                slmPxlX = 1920;
+                gd.getNextNumber();
+                slmPxlY = 1080;
+                gd.getNextNumber();
+                slmScale = gd.getNextNumber();
+                pxlSize = 1000. * slmPxlSize / slmScale;
             } else {
-                double tmp[] = {resImpAvr[0]};
-                ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", tmp);
+                slmPrefix = gd.getNextString();
+                slmPxlSize = gd.getNextNumber();
+                slmPxlX = (int) gd.getNextNumber();
+                slmPxlY = (int) gd.getNextNumber();
+                slmScale = gd.getNextNumber();
+                pxlSize = 1000. * slmPxlSize / slmScale;
             }
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.wl", wavelength);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.na", refInd);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.lastGratings", res);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.width", slmPxlX);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.height", slmPxlY);
-            ij.IJ.setProperty("de.bio_photonics.gratingsearch.prefix", prefix);
-//             ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
-        }
-
-        // find the lowest modulation
-        double minTransmission = Double.MAX_VALUE;
-        int minPos = 0;
-        
-//      [#][maxUnwantedMod|biggestAngleDevBetween(Non)Tirf)|AvgRes|spread|AngTirfRes|spead]
-        double resTab[][] = new double[res.size()][7];
-        
-        for (int i = 0; i < res.size(); i++) { //for all results
-            // get the highest unwanted modulation from the current grating set
-            double maxHere = Double.MIN_VALUE;
-            double avgRes[] = {0,0};
-            double minRes[] = {Double.MAX_VALUE, Double.MAX_VALUE};
-            double maxRes[] = {Double.MIN_VALUE, Double.MIN_VALUE};
-            // res[#result][#angles][#wl] #angles doubled for tirf
-            Grating[][] grs = res.get(i); //pick result
-            for (int dir=0; dir<nrDirs*(1+tirf); dir++) {    //for all angles
-                Grating[] gr = grs[dir];
-                for (int ch=0; ch<gr.length; ch++) {    //for all wavelengths
-                    Grating g = gr[ch];
-                    if (g.unwantedMod > maxHere) {
-                        maxHere = g.unwantedMod;
+            
+            double[] wavelength;
+    
+            objNA = gd.getNextNumber();
+            refInd = gd.getNextNumber();
+            if(objNA < refInd) {
+                refInd=objNA;
+            }
+            resImpAvr[0] = gd.getNextNumber();
+            resImpRange[0] = gd.getNextNumber();
+            Tirf = gd.getNextBoolean();
+            int tirf = Tirf ? 1 : 0;
+            resImpAvr[1] = 1.5+(objNA)/refInd/2.;
+            resImpRange[1] =resImpRange[0]/2;
+            
+    
+            // TODO: there must be a nicer way to code this
+            {
+                // copy all wavelength and switches
+                int count_active = 1;
+                for (int i = 0; i < 3; i++) {
+                    wavelength_gui[i] = gd.getNextNumber();
+                    if (i != 0) {
+                        wavelength_gui_switch[i] = gd.getNextBoolean();
+                        if (wavelength_gui_switch[i] == true) {
+                            count_active++;
+                        }
                     }
-                    double curRes = 1 + wavelength[ch] / g.gratPer / refInd / pxlSize;
-                    avgRes[dir/nrDirs] += curRes;
-                    if(curRes<minRes[dir/nrDirs]) {
-                        minRes[dir/nrDirs] = curRes;
-                    }
-                    if(curRes>maxRes[dir/nrDirs]) {
-                        maxRes[dir/nrDirs] = curRes;
+                }
+    
+                // create the final array 
+                wavelength = new double[count_active];
+    
+                wavelength[0] = wavelength_gui[0];
+                int count_pos = 1;
+                for (int i = 1; i < 3; i++) {
+                    if (wavelength_gui_switch[i] == true) {
+                        wavelength[count_pos++] = wavelength_gui[i];
                     }
                 }
             }
-            avgRes[0] = avgRes[0]/(nrDirs*wavelength.length);
-            avgRes[1] = avgRes[1]/(nrDirs*wavelength.length);
-            resTab[i][0] = maxHere;
-            resTab[i][1] = 0;
-            resTab[i][2] = avgRes[0];
-            resTab[i][3] = maxRes[0]-minRes[0];
-            resTab[i][4] = avgRes[1];
-            resTab[i][5] = maxRes[1]-minRes[1];
-            resTab[i][6] = i;
+    
+            nrDirs = (int) gd.getNextNumber();
+            maxAngleDevDeg = gd.getNextNumber();
+            maxAngleDev = maxAngleDevDeg * Math.PI/180.;
+            nrPhases = (int) gd.getNextNumber();
+            maxEuclDist = gd.getNextNumber();
+    
+            maxUnwMod = gd.getNextNumber();
+            maskSize = (int) gd.getNextNumber();
+            outputFailed = gd.getNextBoolean();
+            maxCandidates = (int) gd.getNextNumber();
+            final String prefix = String.format("%s_%da%dp", slmPrefix, nrDirs, nrPhases);
+    
+            // 1 - calculate the ranges for all from resolution enhancement
+            //
+            // This is pttr/2 = lambda / ( 2 * NA * (resImp-1) * pxlSize)
+            // where
+            //  pttr    : pattern spacing, in pxls
+            //  lambda  : exitation wavelength
+            //  NA	    : objective's NA
+            //  resImp  : factor of resolution improvement, e.g. 1.75x
+            //  pxlSize : projected pixel size 
+            //
+            double resImpMin[] = new double[2];
+            double resImpMax[] = new double[2];
+            resImpMin[0] = resImpAvr[0] - resImpRange[0];
+            resImpMin[1] = resImpAvr[1] - resImpRange[1];
+            resImpMax[0] = resImpAvr[0] + resImpRange[0];
+            resImpMax[1] = resImpAvr[1] + resImpRange[1];
+    
+    
+            IJ.log(String.format("Searching pattern for res. improvement %7.4f -- %7.4f",
+                resImpMin[0], resImpMax[0]));
+            IJ.log(String.format("Searching pattern for res. improvement %7.4f -- %7.4f",
+                resImpMin[1], resImpMax[1]));
+    
+            IJ.log(String.format("Objective %7.4f NA, proj. SLM pixels %5.1f nm", refInd, pxlSize));
+    
+            double[][] gratMin = new double[2][3];
+            double[][] gratMax = new double[2][3];
+    
+            for (int ch = 0; ch < wavelength.length; ch++) {
+                gratMin[0][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMax[0] - 1) * pxlSize);
+                gratMin[1][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMax[1] - 1) * pxlSize);
+                gratMax[0][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMin[0] - 1) * pxlSize);
+                gratMax[1][ch] = 2 * wavelength[ch] / (2 * refInd * (resImpMin[1] - 1) * pxlSize);
+    
+                IJ.log(String.format("Search range %5.0f nm: %7.4f --- %7.4f pxl", wavelength[ch],
+                    gratMin[0][ch], gratMax[0][ch]));
+                    IJ.log(String.format("Search range %5.0f nm: %7.4f --- %7.4f pxl", wavelength[ch],
+                    gratMin[1][ch], gratMax[1][ch]));
+    
+            }
+    
+            // run the actual calculation
+            List<Grating[][]> res = calculate(wavelength, Tirf,
+                resImpAvr, refInd,
+                gratMin, gratMax, nrPhases,
+                nrDirs, maxAngleDev, maskSize,
+                maxUnwMod, maxEuclDist, outputFailed, maxCandidates);
+    
+            // store the result, if any
+            if (res.size() > 0) {
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.phaseNumber", nrPhases);
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.angNumber", nrDirs );
+                if(Tirf) {
+                    ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", resImpAvr);
+                } else {
+                    double tmp[] = {resImpAvr[0]};
+                    ij.IJ.setProperty("de.bio_photonics.gratingsearch.resImp", tmp);
+                }
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.wl", wavelength);
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.na", refInd);
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.lastGratings", res);
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.width", slmPxlX);
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.height", slmPxlY);
+                ij.IJ.setProperty("de.bio_photonics.gratingsearch.prefix", prefix);
+            }
+    
+            // find the lowest modulation
+            double minTransmission = Double.MAX_VALUE;
+            int minPos = 0;
             
-            // see if this is the minimum in the list
-            if (maxHere < minTransmission) {
-                minTransmission = maxHere;
-                minPos = i;
+            double resTab[][] = new double[res.size()][7];
+            
+            for (int i = 0; i < res.size(); i++) { //for all results
+                // get the highest unwanted modulation from the current grating set
+                double maxHere = Double.MIN_VALUE;
+                double avgRes[] = {0,0};
+                double minRes[] = {Double.MAX_VALUE, Double.MAX_VALUE};
+                double maxRes[] = {Double.MIN_VALUE, Double.MIN_VALUE};
+                // res[#result][#angles][#wl] #angles doubled for tirf
+                Grating[][] grs = res.get(i); //pick result
+                for (int dir=0; dir<nrDirs*(1+tirf); dir++) {    //for all angles
+                    Grating[] gr = grs[dir];
+                    for (int ch=0; ch<gr.length; ch++) {    //for all wavelengths
+                        Grating g = gr[ch];
+                        if (g.unwantedMod > maxHere) {
+                            maxHere = g.unwantedMod;
+                        }
+                        double curRes = 1 + wavelength[ch] / g.gratPer / refInd / pxlSize;
+                        avgRes[dir/nrDirs] += curRes;
+                        if(curRes<minRes[dir/nrDirs]) {
+                            minRes[dir/nrDirs] = curRes;
+                        }
+                        if(curRes>maxRes[dir/nrDirs]) {
+                            maxRes[dir/nrDirs] = curRes;
+                        }
+                    }
+                }
+                avgRes[0] = avgRes[0]/(nrDirs*wavelength.length);
+                avgRes[1] = avgRes[1]/(nrDirs*wavelength.length);
+                resTab[i][0] = maxHere;
+                resTab[i][1] = 0;
+                resTab[i][2] = avgRes[0];
+                resTab[i][3] = maxRes[0]-minRes[0];
+                resTab[i][4] = avgRes[1];
+                resTab[i][5] = maxRes[1]-minRes[1];
+                resTab[i][6] = i;
+                
+                // see if this is the minimum in the list
+                if (maxHere < minTransmission) {
+                    minTransmission = maxHere;
+                    minPos = i;
+                }
+    
+                IJ.log("Pattern set " + i + " highest unwanted modulation: " + maxHere);
             }
-
-            IJ.log("Pattern set " + i + " highest unwanted modulation: " + maxHere);
-        }
-
-        java.util.Arrays.sort(resTab, new java.util.Comparator<double[]>() {
-            public int compare(double[] a, double[] b) {
-                return Double.compare(a[0], b[0]);
+    
+            java.util.Arrays.sort(resTab, new java.util.Comparator<double[]>() {
+                public int compare(double[] a, double[] b) {
+                    return Double.compare(a[0], b[0]);
+                }
+            });
+            
+            // output position of lowest unwanted modulation 
+            IJ.log("Lowest unwanted modulation at pos " + minPos);
+            for (int r=0; r<resTab.length; r++) {
+                IJ.log((int)resTab[r][6]+" "+resTab[r][0]+" "+resTab[r][1]+" "+resTab[r][2]+" "+resTab[r][3]+" "+resTab[r][4]+" "+resTab[r][5] );
             }
-        });
-        
-        // output position of lowest unwanted modulation 
-        IJ.log("Lowest unwanted modulation at pos " + minPos);
-        for (int r=0; r<resTab.length; r++) {
-            IJ.log((int)resTab[r][6]+" "+resTab[r][0]+" "+resTab[r][1]+" "+resTab[r][2]+" "+resTab[r][3]+" "+resTab[r][4]+" "+resTab[r][5] );
         }
     }
+
 
     /**
      * main method
