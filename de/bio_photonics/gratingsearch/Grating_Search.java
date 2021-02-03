@@ -236,16 +236,17 @@ public class Grating_Search implements ij.plugin.PlugIn {
             boolean complete = true;
             for (Grating e : col) {
                 if (e == null) {
-                    continue;
+                    complete = false;
                 }
             }
             for (Grating e : colTirf) {
                 if (e == null) {
-                    continue;
+                    complete = false;
                 }
             }
-
-            ret.add(col);
+            if (complete==true) {
+                ret.add(col);
+            }
         }
         return ret;
     }
@@ -266,9 +267,13 @@ public class Grating_Search implements ij.plugin.PlugIn {
      *
      */
     public boolean fourierCheck(Grating[] candidates, Vec2d.Real illum,
-        double maxUnwated, int maskSize, boolean outputAlsoFailed,
+        double maxUnwanted, int maskSize, boolean outputAlsoFailed,
         ImageDisplay spatial, ImageDisplay fourier, String name) {
-
+        
+        
+        IJ.log("name="+name);
+        
+        
         Vec2d.Real sumFreq = Vec2d.createReal(fsPxl, fsPxl);
         Vec2d.Real[] gratFreq = Vec2d.createArrayReal(candidates.length, fsPxl, fsPxl);
 
@@ -314,7 +319,7 @@ public class Grating_Search implements ij.plugin.PlugIn {
 
             //Tool.trace(String.format("%8.5f / %8.5f -> %8.5f", wanted[i], unwanted[i], 
             //unwanted[i]/wanted[i]));
-            if ((unwanted[i] / wanted[i]) > maxUnwated) {
+            if ((unwanted[i] / wanted[i]) > maxUnwanted) {
                 ok = false;
             }
             magResult += String.format("%1d: %5.4f ", i, unwanted[i] / wanted[i]);
@@ -617,10 +622,11 @@ public class Grating_Search implements ij.plugin.PlugIn {
         Vec2d.Real gaussProfile = createGaussIllum(fsPxl / 2.2, fsPxl);
         int countOk = 0;
         for (int i = 0; i < dirs.size(); i++) {
+            ij.IJ.log("i="+i);
 
             Tool.tell("Main WL: FFT set " + i + "/" + dirs.size() + " ok: " + countOk + "/" + max_candidates);
 
-            boolean ok = fourierCheck(dirs.get(i), gaussProfile, max_unwanted, mask_size, false, null, null, "i:" + i);
+            boolean ok = fourierCheck(dirs.get(i), gaussProfile, max_unwanted, mask_size, false, null, null, "mainList_"+i+"/"+dirs.size());
 
             if (ok) {
                 countOk++;
@@ -667,7 +673,7 @@ public class Grating_Search implements ij.plugin.PlugIn {
                     }
                     if(matchDir == false)
                         continue;
-                    boolean ok = fourierCheck(dirsTirf.get(i), gaussProfile, max_unwanted, mask_size, false, null, null, "i:" + i);
+                    boolean ok = fourierCheck(dirsTirf.get(i), gaussProfile, max_unwanted, mask_size, false, null, null, "TIRFt_"+(i+1)+"/"+dirsTirf.size());
                     if (ok) {
                         countOkTirf++;
                     }
@@ -750,13 +756,13 @@ public class Grating_Search implements ij.plugin.PlugIn {
         int slmPxlY = 1024;
         double objNA = 1.47;
         double refInd = 1.36;
-        double resImpAvr[] = {1.80, 1.5+(objNA)/refInd/2.};
-        double[] resImpRange = {0.005, 0.005/2.};
+        double resImpAvr[] = {1.75, 1.5+(objNA)/refInd/2.};
+        double[] resImpRange = {0.02, 0};
         boolean Tirf = true;
-        double[] wavelength_gui = {488, 568, 647};
-        boolean[] wavelength_gui_switch = {true, true, true};
+        double[] wavelength_gui = {491, 568, 647};
+        boolean[] wavelength_gui_switch = {true, false, false};
         int nrDirs = 3;
-        double maxAngleDevDeg =  2;
+        double maxAngleDevDeg =  1.0;
         double maxAngleDev = maxAngleDevDeg * Math.PI/180.;
         int nrPhases = 3;
         double maxEuclDist = 0.05;

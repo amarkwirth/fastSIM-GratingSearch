@@ -177,7 +177,9 @@ public class Generate_Grating implements ij.plugin.PlugIn {
                     }
                 }
             }
-            img.display();
+            if(saveAll.equals(false)){
+                img.display();
+            }
         }
     }
 }

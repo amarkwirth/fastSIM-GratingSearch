@@ -3,7 +3,7 @@
 
 # Options for the java compiler
 JFLAGS = -g -Xlint:unchecked -extdirs "./external" -d ./
-JFLAGS+= -target 1.6 -source 1.6 -bootclasspath ./external/rt-1.6.jar
+JFLAGS+= -target 1.7 -source 1.7 -bootclasspath ./external/rt-1.6.jar
 JC = javac
 JAR = jar
 
@@ -25,6 +25,7 @@ all:	$(wildcard de/bio_photonics/*/*.java)
 jar:	all git-version
 	$(JAR) -cvfm SLM_GratingSearch_$(shell head -c 10 git-version.txt).jar \
 	Manifest.txt plugins.config de/*/*/*.class
+	cp SLM_GratingSearch_$(shell head -c 10 git-version.txt).jar ~/d3/Fiji.app/plugins/SLM_GratingSearch.jar
 
 git-version :
 	git rev-parse HEAD > ./git-version.txt  ; \
